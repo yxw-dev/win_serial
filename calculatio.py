@@ -29,4 +29,4 @@ def trans_position(he, ve, dist):
     print('N坐标{}'.format(north))
     print('E坐标{}'.format(eastern))
     print('Z坐标{}'.format(height))
-    return north, eastern, height
+    return float('%.4f'%north), float('%.4f'%eastern), float('%.4f'%height)

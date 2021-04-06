@@ -133,11 +133,11 @@ class MyMainWindow(QMainWindow , Ui_MainWindow , QObject):
         except Exception as e:
             self.plainTextEdit.appendPlainText('请先打开串口')
 
-    def deal(self , str):
+    def deal(self , text):
         #刷新界面输出
-        self.plainTextEdit.appendPlainText(str)
+        self.plainTextEdit.appendPlainText(text)
         #处理返回结果
-        temp_point = get_angle_from_com_response(str)
+        temp_point = get_angle_from_com_response(text)
         if temp_point is None:
             return
         else:
@@ -146,15 +146,14 @@ class MyMainWindow(QMainWindow , Ui_MainWindow , QObject):
             get_point.append(get_p)
         if(len(get_point) <= 5):
             try:
-                print(get_point[0][0]+ get_point[0][1]+ get_point[0][2])
-                self.lineEdit_2.setText(get_point[0][0]+ get_point[0][1]+ get_point[0][2])
-                self.lineEdit.setText(str(get_point[1]))
-                self.lineEdit_5.setText(str(get_point[2]))
-                self.lineEdit_3.setText(str(get_point[3]))
-                self.lineEdit_4.setText(str(get_point[4]))
+                self.lineEdit_2.setText(str(get_point[0][0]) +','+ str(get_point[0][1]) +','+ str(get_point[0][2]))
+                self.lineEdit.setText(str(get_point[1][0]) +',' + str(get_point[1][1]) +','+ str(get_point[1][2]))
+                self.lineEdit_5.setText(str(get_point[2][0])+',' + str(get_point[2][1])+',' + str(get_point[2][2]))
+                self.lineEdit_3.setText(str(get_point[3][0])+',' + str(get_point[3][1])+',' + str(get_point[3][2]))
+                self.lineEdit_4.setText(str(get_point[4][0])+',' + str(get_point[4][1])+',' + str(get_point[4][2]))
                 get_point.clear()
-            except:
-                return
+            except Exception as e:
+                print(str(e))
         else:
             tem = get_point[5]
             self.lineEdit_2.setText(str(get_point[5]))
