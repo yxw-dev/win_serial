@@ -163,7 +163,7 @@ class MyMainWindow(QMainWindow , Ui_MainWindow , QObject):
             point1 = [float(self.input1_1.text()), float(self.input1_2.text()), float(self.input1_3.text())]
             point2 = [float(self.input2_1.text()), float(self.input2_2.text()), float(self.input2_3.text())]
         except Exception as e:
-            print('请输入')
+            print(str(e))
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
