@@ -1,5 +1,6 @@
 import time
 import sys
+import  re
 from threading import Thread
 
 import  serial
@@ -12,7 +13,7 @@ from window_station import *
 from calculatio import trans_position,get_angle_from_com_response
 
 #存放命令集合（字典），从文件读取
-order_dict = {'查找':'%R1Q,50013:2'}
+order_dict = {'查找角度及距离':'%R1Q,50013:2' , '旋转':'%R1Q,50003:0,0,0,0,0,0,0' , '搜索并照准':'%R1Q,9029:0.2618,0.2618,0'}
 
 #固定点坐标
 point1 = []
@@ -31,7 +32,8 @@ class MyMainWindow(QMainWindow , Ui_MainWindow , QObject):
         self.Connect_Button.clicked.connect(self.connect)
         self.Find_Button.clicked.connect(self.find_point)
         self.Move_Button.clicked.connect(self.move_point)
-        self.send_button.clicked.connect(self.send_ord)
+        self.Meat_Button.clicked.connect(self.mear_point)
+        self.send_button.clicked.connect(self.send)
         self.input_point.clicked.connect(self.refrush_point)
         self.get_single.connect(self.deal)
 
@@ -97,41 +99,33 @@ class MyMainWindow(QMainWindow , Ui_MainWindow , QObject):
         #         else:
         #             # Some data was received
         #             return data
-    def send_ord(self):
+    def send(self):
+        self.send_ord(self.send_text.text())
+
+    def send_ord(self , text):
         if (self.com1.isOpen() == True):
-            t = '\b\r' + self.send_text.text()+'\n'
+            t = '\b\r' + text +'\n'
             send_bytes = self.com1.write(t.encode('utf-8'))
-            #get_angel_cmd = '\b\r%R1Q,50013:2\n'
-            #send_bytes = self.com1.write(get_angel_cmd.encode('utf-8'))
             self.plainTextEdit.appendPlainText(self.send_text.text()+'\r\n' + str(send_bytes))
-            self.send_list.append(self.send_text.text())
+            ord = re.split(':|,', text)[1]
+            self.send_list.append(ord)
         else:
             self.plainTextEdit.appendPlainText('先连接串口')
 
     def find_point(self):
         #查找点的命令
-        text = ""
-        try:
-            if (self.com1.isOpen() == True):
-                self.com1.write(text)
-            else:
-                self.plainTextEdit.appendPlainText('请先打开串口')
-        except Exception as e:
-            self.plainTextEdit.appendPlainText('请先打开串口')
+        self.send_ord(order_dict['搜索并照准'])
+
+    def mear_point(self):
+        #根据输入的xyz数据，生成相应命令发送
+        self.send_ord(order_dict['查找角度及距离'])
 
     def move_point(self):
         #根据输入的xyz数据，生成相应命令发送
         t1 = self.lineEdit_6.text()
         t2 = self.lineEdit_7.text()
-        t3 = self.lineEdit_8.text()
-        text = ""
-        try:
-            if (self.com1.isOpen() == True):
-                self.com1.write(text)
-            else:
-                self.plainTextEdit.appendPlainText('请先打开串口')
-        except Exception as e:
-            self.plainTextEdit.appendPlainText('请先打开串口')
+        text = '%R1Q,50003:' + t1 + ',' + t2 + ',0,0,0,0,0';
+        self.send_ord(text)
 
     def deal(self , text):
         #刷新界面输出

@@ -106,7 +106,7 @@
       <rect>
        <x>20</x>
        <y>30</y>
-       <width>201</width>
+       <width>101</width>
        <height>34</height>
       </rect>
      </property>
@@ -142,9 +142,6 @@
       </item>
       <item>
        <widget class="QLineEdit" name="lineEdit_7"/>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="lineEdit_8"/>
       </item>
      </layout>
     </widget>
@@ -224,6 +221,19 @@
        <widget class="QLineEdit" name="input1_3"/>
       </item>
      </layout>
+    </widget>
+    <widget class="QPushButton" name="Meat_Button">
+     <property name="geometry">
+      <rect>
+       <x>130</x>
+       <y>30</y>
+       <width>101</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>测量</string>
+     </property>
     </widget>
    </widget>
    <widget class="QGroupBox" name="groupBox_3">
