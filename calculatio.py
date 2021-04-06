@@ -22,7 +22,7 @@ def get_angle_from_com_response(response):
     except:
         return False
 
-def trans_position(he, ve, dist):
+def getNEZ(he, ve, dist):
     north = dist * math.cos(math.pi / 2 - ve) * math.cos(he)
     eastern = dist * math.cos(math.pi / 2 - ve) * math.sin(he)
     height = dist * math.sin(math.pi / 2 - ve)
@@ -30,3 +30,8 @@ def trans_position(he, ve, dist):
     print('E坐标{}'.format(eastern))
     print('Z坐标{}'.format(height))
     return float('%.4f'%north), float('%.4f'%eastern), float('%.4f'%height)
+
+def getPosition(p11, N0, E0, Z0, p33):
+    p33[0] = p11[0] + N0
+    p33[1] = p11[1] - E0
+    p33[2] = p11[2] - Z0

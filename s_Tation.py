@@ -10,15 +10,27 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from window_station import *
-from calculatio import trans_position,get_angle_from_com_response
+from calculatio import getNEZ,get_angle_from_com_response,getPosition
 
 #存放命令集合（字典），从文件读取
 order_dict = {'查找角度及距离':'%R1Q,50013:2' , '旋转':'%R1Q,50003:0,0,0,0,0,0,0' , '搜索并照准':'%R1Q,9029:0.2618,0.2618,0'}
 
-#固定点坐标
-point1 = []
-point2 = []
-get_point = []
+#固定点坐标（或者作为已知绝对坐标的两个点）
+point1 = [0,0,0]
+point2 = [0,0,0]
+
+#查找所得点坐标
+f_point1 = []
+f_point2 = []
+
+#全站仪坐标
+location_point = []
+
+#一共5个点两个确定点，一个全站仪坐标点，两个待查找点的列表
+#判断该列表内元素个数确定当前流程执行位置。
+#[0]存放全站仪坐标点，之后安点顺序排列
+point_list = []
+
 
 
 class MyMainWindow(QMainWindow , Ui_MainWindow , QObject):
@@ -34,7 +46,7 @@ class MyMainWindow(QMainWindow , Ui_MainWindow , QObject):
         self.Move_Button.clicked.connect(self.move_point)
         self.Meat_Button.clicked.connect(self.mear_point)
         self.send_button.clicked.connect(self.send)
-        self.input_point.clicked.connect(self.refrush_point)
+        self.input_button.clicked.connect(self.get_point)
         self.get_single.connect(self.deal)
 
         #记录发送与接受数据，应当一一对应。字典不适用，相同键不能出现两次，但是会出先相同命令发送多次
@@ -86,19 +98,7 @@ class MyMainWindow(QMainWindow , Ui_MainWindow , QObject):
                         print(data)
                 except Exception as e:
                     print(str(e))
-        # print(data.type)
-        # ad = data
-        #                 get_angle_from_com_response(str(ad))
-        #         except serial.SerialException as e:
-        #             # There is no new data from serial port
-        #             return None
-        #         except TypeError as e:
-        #             # Disconnect of USB->UART occured
-        #             self.open_com.close()
-        #             return None
-        #         else:
-        #             # Some data was received
-        #             return data
+
     def send(self):
         self.send_ord(self.send_text.text())
 
@@ -128,40 +128,76 @@ class MyMainWindow(QMainWindow , Ui_MainWindow , QObject):
         self.send_ord(text)
 
     def deal(self , text):
-        #刷新界面输出
         self.plainTextEdit.appendPlainText(text)
-        #处理返回结果
-        temp_point = get_angle_from_com_response(text)
-        if temp_point is None:
-            return
-        else:
-            n,e,z = trans_position(float(temp_point[0]) , float(temp_point[1]) , float(temp_point[2]))
-            get_p = [n,e,z]
-            get_point.append(get_p)
-        if(len(get_point) <= 5):
-            try:
-                self.lineEdit_2.setText(str(get_point[0][0]) +','+ str(get_point[0][1]) +','+ str(get_point[0][2]))
-                self.lineEdit.setText(str(get_point[1][0]) +',' + str(get_point[1][1]) +','+ str(get_point[1][2]))
-                self.lineEdit_5.setText(str(get_point[2][0])+',' + str(get_point[2][1])+',' + str(get_point[2][2]))
-                self.lineEdit_3.setText(str(get_point[3][0])+',' + str(get_point[3][1])+',' + str(get_point[3][2]))
-                self.lineEdit_4.setText(str(get_point[4][0])+',' + str(get_point[4][1])+',' + str(get_point[4][2]))
-                get_point.clear()
-            except Exception as e:
-                print(str(e))
-        else:
-            tem = get_point[5]
-            self.lineEdit_2.setText(str(get_point[5]))
-            self.lineEdit.setText('')
+        #列表为空，查找得到第一个已知绝对坐标点，计算得全站仪坐标点，存入第一点绝对坐标和全站仪坐标。count变为2
+        if point_list.count() == 0:
+            temp_point = get_angle_from_com_response(text)
+            n, e, z = getNEZ(float(temp_point[0]), float(temp_point[1]), float(temp_point[2]))
+            getPosition(point1 , n, e, z, location_point)
+            point_list.append(location_point)
+            point_list.append(point1)
+            self.lineEdit_2.setText(str(point_list[1][0]) + ',' + str(point_list[1][1]) + ',' + str(point_list[1][2]))
+            self.lineEdit_5.setText(str(point_list[0][0]) + ',' + str(point_list[0][1]) + ',' + str(point_list[0][2]))
+
+        #列表中已有数据，若为2计算更新全站仪坐标，取平均，写入第二点绝对坐标。cout变为3
+        if point_list.count()  == 2:
+            temp_point = get_angle_from_com_response(text)
+            n, e, z = getNEZ(float(temp_point[0]), float(temp_point[1]), float(temp_point[2]))
+            getPosition(point2, n, e, z, location_point)
+            tem_point =[0,0,0]
+            for i in range(3):
+                tem_point[i] = (location_point[i] + point_list[0][i]) / 2
+            point_list[0] = tem_point
+            point_list.append(point2)
+            self.lineEdit.setText(str(point_list[1][0]) + ',' + str(point_list[1][1]) + ',' + str(point_list[1][2]))
+            self.lineEdit_5.setText(str(point_list[0][0]) + ',' + str(point_list[0][1]) + ',' + str(point_list[0][2]))
+
+        #根据全站仪坐标，和采集得到的角度距离，计算第三个点坐标，存入。count变为4
+        if point_list.count() == 3:
+            temp_point = get_angle_from_com_response(text)
+            n, e, z = getNEZ(float(temp_point[0]), float(temp_point[1]), float(temp_point[2]))
+            getPosition(location_point, n, e, z, f_point1)
+            point_list.append(f_point1)
+            self.lineEdit_3.setText(str(point_list[3][0]) + ',' + str(point_list[3][1]) + ',' + str(point_list[3][2]))
+
+        #根据全站仪坐标，和采集得到的角度距离，计算最后点坐标，存入。count变为5.写入tex
+        if point_list.count() == 4:
+            temp_point = get_angle_from_com_response(text)
+            n, e, z = getNEZ(float(temp_point[0]), float(temp_point[1]), float(temp_point[2]))
+            getPosition(location_point, n, e, z, f_point2)
+            point_list.append(f_point2)
+            self.lineEdit_4.setText(str(point_list[4][0]) + ',' + str(point_list[4][1]) + ',' + str(point_list[4][2]))
+            with open("test.txt", "a") as f:
+                for i in range(point_list.count()):
+                    f.write('[' + point_list[i][0] + ',' + point_list[i][1] + ',' + point_list[i][2] + '];')
+                f.write('\r\n')
+
+        #清空列表，执行count=0时代码
+        if point_list.count() == 5:
+            for i in range(point1.count()):
+                point1[i] = f_point1[i]
+                point2[i] = f_point1[i]
+            point_list.clear()
+            temp_point = get_angle_from_com_response(text)
+            n, e, z = getNEZ(float(temp_point[0]), float(temp_point[1]), float(temp_point[2]))
+            getPosition(point1, n, e, z, location_point)
+            point_list.append(location_point)
+            point_list.append(point1)
+
+            self.lineEdit_2.setText(str(point_list[1][0]) + ',' + str(point_list[1][1]) + ',' + str(point_list[1][2]))
+            self.lineEdit_5.setText(str(point_list[0][0]) + ',' + str(point_list[0][1]) + ',' + str(point_list[0][2]))
             self.lineEdit_5.setText('')
             self.lineEdit_3.setText('')
             self.lineEdit_4.setText('')
-            get_point.clear()
-            get_point.append(tem)
 
-    def refrush_point(self):
+    def get_point(self):
         try:
-            point1 = [float(self.input1_1.text()), float(self.input1_2.text()), float(self.input1_3.text())]
-            point2 = [float(self.input2_1.text()), float(self.input2_2.text()), float(self.input2_3.text())]
+            point1[0] = float(self.input1_1.text())
+            point1[1] = float(self.input1_2.text())
+            point1[2] = float(self.input1_3.text())
+            point2[0] = float(self.input2_1.text())
+            point2[1] = float(self.input2_2.text())
+            point2[2] = float(self.input2_3.text())
         except Exception as e:
             print(str(e))
 

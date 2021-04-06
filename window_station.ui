@@ -145,7 +145,7 @@
       </item>
      </layout>
     </widget>
-    <widget class="QPushButton" name="input_point">
+    <widget class="QPushButton" name="input_button">
      <property name="geometry">
       <rect>
        <x>20</x>
@@ -178,10 +178,10 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="input2_2"/>
+         <widget class="QLineEdit" name="input2_1"/>
         </item>
         <item>
-         <widget class="QLineEdit" name="input2_4"/>
+         <widget class="QLineEdit" name="input2_2"/>
         </item>
        </layout>
       </item>
@@ -213,7 +213,7 @@
          <widget class="QLineEdit" name="input1_1"/>
         </item>
         <item>
-         <widget class="QLineEdit" name="input1_4"/>
+         <widget class="QLineEdit" name="input1_2"/>
         </item>
        </layout>
       </item>
@@ -248,7 +248,7 @@
     <property name="title">
      <string>坐标</string>
     </property>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>20</x>
