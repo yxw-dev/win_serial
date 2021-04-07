@@ -20,11 +20,11 @@ point1 = [0,0,0]
 point2 = [0,0,0]
 
 #查找所得点坐标
-f_point1 = []
-f_point2 = []
+f_point1 = [0,0,0]
+f_point2 = [0,0,0]
 
 #全站仪坐标
-location_point = []
+location_point = [0,0,0]
 
 #一共5个点两个确定点，一个全站仪坐标点，两个待查找点的列表
 #判断该列表内元素个数确定当前流程执行位置。
@@ -129,8 +129,10 @@ class MyMainWindow(QMainWindow , Ui_MainWindow , QObject):
 
     def deal(self , text):
         self.plainTextEdit.appendPlainText(text)
+        if(len(text) < 15):
+            return
         #列表为空，查找得到第一个已知绝对坐标点，计算得全站仪坐标点，存入第一点绝对坐标和全站仪坐标。count变为2
-        if point_list.count() == 0:
+        if len(point_list) == 0:
             temp_point = get_angle_from_com_response(text)
             n, e, z = getNEZ(float(temp_point[0]), float(temp_point[1]), float(temp_point[2]))
             getPosition(point1 , n, e, z, location_point)
@@ -138,9 +140,10 @@ class MyMainWindow(QMainWindow , Ui_MainWindow , QObject):
             point_list.append(point1)
             self.lineEdit_2.setText(str(point_list[1][0]) + ',' + str(point_list[1][1]) + ',' + str(point_list[1][2]))
             self.lineEdit_5.setText(str(point_list[0][0]) + ',' + str(point_list[0][1]) + ',' + str(point_list[0][2]))
+            return
 
         #列表中已有数据，若为2计算更新全站仪坐标，取平均，写入第二点绝对坐标。cout变为3
-        if point_list.count()  == 2:
+        if len(point_list)  == 2:
             temp_point = get_angle_from_com_response(text)
             n, e, z = getNEZ(float(temp_point[0]), float(temp_point[1]), float(temp_point[2]))
             getPosition(point2, n, e, z, location_point)
@@ -151,30 +154,36 @@ class MyMainWindow(QMainWindow , Ui_MainWindow , QObject):
             point_list.append(point2)
             self.lineEdit.setText(str(point_list[1][0]) + ',' + str(point_list[1][1]) + ',' + str(point_list[1][2]))
             self.lineEdit_5.setText(str(point_list[0][0]) + ',' + str(point_list[0][1]) + ',' + str(point_list[0][2]))
+            return
 
         #根据全站仪坐标，和采集得到的角度距离，计算第三个点坐标，存入。count变为4
-        if point_list.count() == 3:
+        if len(point_list) == 3:
             temp_point = get_angle_from_com_response(text)
             n, e, z = getNEZ(float(temp_point[0]), float(temp_point[1]), float(temp_point[2]))
             getPosition(location_point, n, e, z, f_point1)
             point_list.append(f_point1)
             self.lineEdit_3.setText(str(point_list[3][0]) + ',' + str(point_list[3][1]) + ',' + str(point_list[3][2]))
+            return
 
         #根据全站仪坐标，和采集得到的角度距离，计算最后点坐标，存入。count变为5.写入tex
-        if point_list.count() == 4:
+        if len(point_list) == 4:
             temp_point = get_angle_from_com_response(text)
             n, e, z = getNEZ(float(temp_point[0]), float(temp_point[1]), float(temp_point[2]))
             getPosition(location_point, n, e, z, f_point2)
             point_list.append(f_point2)
             self.lineEdit_4.setText(str(point_list[4][0]) + ',' + str(point_list[4][1]) + ',' + str(point_list[4][2]))
-            with open("test.txt", "a") as f:
-                for i in range(point_list.count()):
-                    f.write('[' + point_list[i][0] + ',' + point_list[i][1] + ',' + point_list[i][2] + '];')
-                f.write('\r\n')
+            try:
+                with open("test.txt", "a") as f:
+                    for i in range(len(point_list)):
+                        f.write('[' + str(point_list[i][0]) + ',' + str(point_list[i][1]) + ',' + str(point_list[i][2]) + '];')
+                    f.write('\r\n')
+            except Exception as e:
+                print(str(e))
+            return
 
         #清空列表，执行count=0时代码
-        if point_list.count() == 5:
-            for i in range(point1.count()):
+        if len(point_list) == 5:
+            for i in range(len(point1)):
                 point1[i] = f_point1[i]
                 point2[i] = f_point1[i]
             point_list.clear()
@@ -186,9 +195,10 @@ class MyMainWindow(QMainWindow , Ui_MainWindow , QObject):
 
             self.lineEdit_2.setText(str(point_list[1][0]) + ',' + str(point_list[1][1]) + ',' + str(point_list[1][2]))
             self.lineEdit_5.setText(str(point_list[0][0]) + ',' + str(point_list[0][1]) + ',' + str(point_list[0][2]))
-            self.lineEdit_5.setText('')
+            self.lineEdit.setText('')
             self.lineEdit_3.setText('')
             self.lineEdit_4.setText('')
+            return
 
     def get_point(self):
         try:
